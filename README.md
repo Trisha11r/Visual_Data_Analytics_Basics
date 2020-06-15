@@ -46,3 +46,5 @@ Performing basic visual data analysis using Python (Server side) and D3.js(clien
 <img src= "./Screenshots/ScatterplotMatrix_Original.png" width= "500">
 <img src= "./Screenshots/ScatterplotMatrix_Random.png" width= "500">
 <img src= "./Screenshots/ScatterplotMatrix_Stratified.png" width= "500">
+
+## DEMO VIDEO LINK (YouTube): https://youtu.be/U9lX7lheJXA
