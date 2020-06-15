@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <script src = "https://d3js.org/d3.v4.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <h1><center>CSE 564: Lab 2</center></h1>
+      <h1><center>Visualizations on Kaggle’s Online Shopper’s Intention dataset (|N|=1000 and |D|=18)</center></h1>
+      <h1><center><font color = "#0B98DE">**Choose options from the dropdown on the left to get the desired plot**</font></center></h1>
+   </head>
+  <style>
+    body {
+      font: 12px Arial;
+      background-color:#eee4e4;
+    }
+    path {
+      stroke: steelblue;
+      stroke-width: 2;
+      fill: none;
+    }
+    .axis path, .axis line {
+      fill: none;
+      stroke: grey;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .dot {
+    fill: white;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+    }
+
+    .intrinsic {
+    fill: #582C89;
+    stroke: purple;
+    stroke-width: 10px;
+    }
+
+    .frame {
+    fill: none;
+    stroke: black;
+    }
+
+    #dropdown_menu{
+      left:10px;
+      top:400px;
+    }
+  </style>
+   <body>
+      <div align = 'left'>
+        <select id = "dropdown_menu" style = "position: fixed;">
+        <option disabled selected value> -- select an option -- </option>
+        <!-- <option value="Choose an Option">Choose an Option</option> -->
+        <option value="SCREE PLOT: Original Data">SCREE PLOT: Original Data</option>
+        <option value="SCREE PLOT: Random Data">SCREE PLOT: Random Data</option>
+        <option value="SCREE PLOT: Stratified Data">SCREE PLOT: Stratified Data</option>
+
+        <option value="PCA-->2D SCATTER PLOT: Original Data">PCA-->2D SCATTER PLOT: Original Data</option>
+        <option value="PCA-->2D SCATTER PLOT: Random Data">PCA-->2D SCATTER PLOT: Random Data</option>
+        <option value="PCA-->2D SCATTER PLOT: Stratified Data">PCA-->2D SCATTER PLOT: Stratified Data</option>
+
+        <option value="MDS-->2D SCATTER PLOT: Original Data(Euclidean Dist)">MDS-->2D SCATTER PLOT: Original Data(Euclidean Dist)</option>
+        <option value="MDS-->2D SCATTER PLOT: Original Data(Correlation Dist)">MDS-->2D SCATTER PLOT: Original Data(Correlation Dist)</option>
+        <option value="MDS-->2D SCATTER PLOT: Random Data(Euclidean Dist)">MDS-->2D SCATTER PLOT: Random Data(Euclidean Dist)</option>
+        <option value="MDS-->2D SCATTER PLOT: Random Data(Correlation Dist)">MDS-->2D SCATTER PLOT: Random Data(Correlation Dist)</option>
+        <option value="MDS-->2D SCATTER PLOT: Stratified Data(Euclidean Dist)">MDS-->2D SCATTER PLOT: Stratified Data(Euclidean Dist)</option>
+        <option value="MDS-->2D SCATTER PLOT: Stratified Data(Correlation Dist)">MDS-->2D SCATTER PLOT: Stratified Data(Correlation Dist)</option>
+        <option value="SCATTER PLOT MATRIX: Original Data">SCATTER PLOT MATRIX: Original Data</option>
+        <option value="SCATTER PLOT MATRIX: Random Data">SCATTER PLOT MATRIX: Random Data</option>
+        <option value="SCATTER PLOT MATRIX: Stratified Data">SCATTER PLOT MATRIX: Stratified Data</option>
+        <!-- <option value= "Scatter Plot Matrix for Original Data">Scatter Plot Matrix for Original Data</option> -->
+        
+        
+      </select>
+    </div>
+    <div align = 'center'>
+      <svg id="chart"></svg>
+    </div>
+      <!-- <div id="option">
+         <input name="updateButton" type="button" value="Update" onclick="updateData()" />
+       --><<!-- /div> -->
+<script type="text/javascript">
+
+var value;
+
+d3.select("#dropdown_menu").on("change", function(d) {
+        var selectedOption = d3.select(this).property("value");
+        console.log(selectedOption);
+        
+        if(selectedOption == 'SCREE PLOT: Original Data') 
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.original_data_scree | safe }};
+          attr_value = {{data.original_data_attr | safe }}
+          get_screeplot(value, attr_value, 0);
+          
+          // console.log(value);
+        }
+        else if(selectedOption == 'SCREE PLOT: Random Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.random_data_scree | safe }};
+          attr_value = {{data.random_data_attr | safe }}
+          // console.log(value[0]);
+          get_screeplot(value, attr_value, 1);
+        }
+        else if(selectedOption == 'SCREE PLOT: Stratified Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.strat_data_scree | safe }};
+          attr_value = {{data.strat_data_attr | safe }}
+          get_screeplot(value, attr_value, 2);
+        }  
+        else if(selectedOption == 'PCA-->2D SCATTER PLOT: Original Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.original_pca_scatter_data | safe }};
+          get_2D_scatterplot_pca(value, 0);
+        }  
+        else if(selectedOption == 'PCA-->2D SCATTER PLOT: Random Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.random_pca_scatter_data | safe }};
+          get_2D_scatterplot_pca(value, 1);
+        }     
+        else if(selectedOption == 'PCA-->2D SCATTER PLOT: Stratified Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.strat_pca_scatter_data | safe }};
+          get_2D_scatterplot_pca(value, 2);
+        }   
+        else if(selectedOption == 'MDS-->2D SCATTER PLOT: Original Data(Euclidean Dist)')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.original_mds_scatter_euclid | safe }};
+          get_2D_scatterplot_mds(value, 0);
+        }  
+        else if(selectedOption == 'MDS-->2D SCATTER PLOT: Original Data(Correlation Dist)')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.original_mds_scatter_corr | safe }};
+          get_2D_scatterplot_mds(value, 1);
+        }  
+        else if(selectedOption == 'MDS-->2D SCATTER PLOT: Random Data(Euclidean Dist)')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.random_mds_scatter_euclid | safe }};
+          get_2D_scatterplot_mds(value, 10);
+        }  
+        else if(selectedOption == 'MDS-->2D SCATTER PLOT: Random Data(Correlation Dist)')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.random_mds_scatter_corr | safe }};
+          get_2D_scatterplot_mds(value, 11);
+        }  
+        else if(selectedOption == 'MDS-->2D SCATTER PLOT: Stratified Data(Euclidean Dist)')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.strat_mds_scatter_euclid | safe }};
+          get_2D_scatterplot_mds(value, 20);
+        }  
+        else if(selectedOption == 'MDS-->2D SCATTER PLOT: Stratified Data(Correlation Dist)')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.strat_mds_scatter_corr | safe }};
+          get_2D_scatterplot_mds(value, 21);
+        }
+        else if(selectedOption == 'SCATTER PLOT MATRIX: Original Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.original_data_attr | safe }}
+          dataset = {{data.original_data | safe }}
+          get_scatterplot_matrix(value, dataset, 0);
+        }
+        else if(selectedOption == 'SCATTER PLOT MATRIX: Random Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.random_data_attr | safe }}
+          dataset = {{data.random_data | safe }}
+          get_scatterplot_matrix(value, dataset, 1);
+        }
+        else if(selectedOption == 'SCATTER PLOT MATRIX: Stratified Data')
+        {
+          d3.select("svg").selectAll('*').remove();
+          value = {{data.strat_data_attr | safe }}
+          dataset = {{data.strat_data | safe }}
+          get_scatterplot_matrix(value, dataset, 2);
+        }  
+        });
+      
+
+function get_scatterplot_matrix(attributes, dataset, mode)
+{
+
+  var margin = {top: 50, right: 20, bottom: 500, left: 70},
+  width = 800 - margin.left - margin.right,
+  height = 1000 - margin.top - margin.bottom;
+
+  var colour;
+  if(mode == 0){
+    colour = "#005451";
+    title_name = "Scatter Plot Matrix for Original Data"
+  }
+  else if (mode == 1){
+    colour = '#ea526f';
+    title_name = "Scatter Plot Matrix for Random Data"
+  }
+  else{
+    colour = '#3a5fcd';
+    title_name = "Scatter Plot Matrix for Stratified Data"
+  } 
+
+  cols = [];
+  attributes.forEach(function(d){
+    cols.push(d.Attribute_Name);
+  })
+  
+  var size = 230,
+    padding = 24;
+
+  var x = d3.scaleLinear()
+      .range([padding / 2, size - padding / 2]);
+
+  var y = d3.scaleLinear()
+      .range([size - padding / 2, padding / 2]);
+
+  
+  var xAxis = d3.axisBottom()
+      .scale(x)
+      .ticks(5);
+      
+
+  var yAxis = d3.axisLeft()
+      .scale(y)
+      .ticks(5);
+
+    var columnDomains = {};
+
+    cols.forEach(function(c) {
+      columnDomains[c] = d3.extent(dataset, function(d) { return d[c]; });
+    });
+
+    xAxis.tickSize(0.25);
+
+    var svg = d3.select('svg')
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.selectAll(".x.axis")
+        .data(cols)
+      .enter().append("g")
+        .attr("class", "x axis")
+        .attr("transform", function(d, i) { return "translate(" + (cols.length - i - 1) * size + ",0)"; })
+        .each(function(d) {
+          x.domain(columnDomains[d]).nice();
+          d3.select(this).call(xAxis);
+        });
+
+    svg.selectAll(".y.axis")
+        .data(cols)
+      .enter().append("g")
+        .attr("class", "y axis")
+        .attr("transform", function(d, i) { return "translate(0," + i * size + ")"; })
+        .each(function(d) { y.domain(columnDomains[d]); d3.select(this).call(yAxis); });
+
+    var cell = svg.selectAll(".cell")
+        .data(cross(cols, cols))
+      .enter().append("g")
+        .attr("class", "cell")
+        .attr("transform", function(d) { return "translate(" + (cols.length - d.i - 1) * size + "," + d.j * size + ")"; })
+        .each(plot);
+
+    
+    cell.filter(function(d) { return d.i === d.j; }).append("text")
+        .attr("x", size/2)
+        .attr("y", size/2)
+        .attr("text-anchor", "middle")
+        .text(function(d) { return d.x; });
+
+    function plot(p) {
+      var cell = d3.select(this);
+
+      x.domain(columnDomains[p.x]);
+      y.domain(columnDomains[p.y]);
+
+      cell.append("rect")
+          .attr("class", "frame")
+          .classed("diagonal", function(d) {return d.i === d.j; })
+          .attr("x", padding / 2)
+          .attr("y", padding / 2)
+          .attr("width", size - padding)
+          .attr("height", size - padding);
+
+      cell.filter(function(d) {return d.i !== d.j; })    
+        .selectAll("circle")
+        .data(dataset)
+        .enter().append("circle")
+          .attr("cx", function(d) { return x(d[p.x]); })
+          .attr("cy", function(d) { return y(d[p.y]); })
+          .attr("r", 2.5)
+          .style("fill", colour);
+    }
+
+  function cross(a, b) {
+    var c = [], n = a.length, m = b.length, i, j;
+    for (i = -1; ++i < n;) for (j = -1; ++j < m;) c.push({x: a[i], i: i, y: b[j], j: j});
+    return c;
+  }
+
+  // Add Plot Title
+      svg.append("text")
+         .attr("x", 350)
+         .attr("y", height-470)
+         .attr("text-anchor", "middle")  
+         .style("font-size", "20px") 
+         .style("text-decoration", "underline") 
+         .attr("stroke", "black")
+         .text(title_name);
+}
+
+function get_screeplot(value, attr_value, mode)
+{
+  // set the dimensions and margins of the graph
+  var margin = {top: 50, right: 20, bottom: 500, left: 70},
+    width = 1000 - margin.left - margin.right,
+    height = 1000 - margin.top - margin.bottom;
+
+  var colour;
+  if(mode == 0){
+    colour = "#005451";
+    title_name = "Scree Plot for Original Data"
+  }
+  else if (mode == 1){
+    colour = '#ea526f';
+    title_name = "Scree Plot for Random Data"
+  }
+  else{
+    colour = '#3a5fcd';
+    title_name = "Scree Plot for Stratified Data"
+  }
+
+  // set the ranges
+  var rangeval  = d3.extent(value, function(d){return d.PC_Number});
+  var xaxis = d3.scaleLinear().range([0, width]).domain([rangeval[0]- 0.5, rangeval[1]+0.5]);
+  var yaxis = d3.scaleLinear().range([height, 0]).domain([0, 100]);
+
+  var sum = 0;
+  var index;
+  // function intrinsicDimension(value){
+   
+   for(var i=0 ; i<value.length ; i++){
+      if(sum>=75){
+         index = i;
+         break;
+      }
+      sum += value[i].Variance_Explained;
+   }
+   
+
+  var cum_value = 0
+
+  var cum_value = []
+  var prev_sum = 0
+  for(var i =0; i<value.length; i++){
+    cum_value[i] = prev_sum + value[i].Variance_Explained;
+    prev_sum = cum_value[i]
+  }
+
+
+  var valuelinec = d3.line()
+                    .x(function(d){ return xaxis(d.PC_Number);})
+                    .y(function(d, i){ return yaxis(cum_value[i]);});
+
+  var svg = d3.select('svg')
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+  //add Bar plot
+    svg.selectAll("bar")
+       .data(value)
+       .enter()
+       .append("rect")
+       .attr("class", "bar")
+       .attr("fill", colour)
+       .attr("x", function(d) { return xaxis(d.PC_Number- 0.35 ); })
+       .attr("y", function(d) { return yaxis(d.Variance_Explained); })
+       .attr("width", "40px")
+       .attr("height", function(d) { return height - yaxis(d.Variance_Explained); });
+
+
+    svg.append("path")
+        .attr("class", "line")
+        .attr("d", valuelinec(value));
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(xaxis).ticks(20))
+        .append("text")
+       .attr("y", 40)
+       .attr("dx", width -500)
+       .attr("text-anchor", "end")
+       .style("fill", "black")
+       .text("Principal Component")
+       .enter();
+
+    // Add the Y Axis
+    svg.append("g")
+        .call(d3.axisLeft(yaxis))
+        .append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("y", 20)
+       .attr("dy", "-5.1em")
+       .attr("x", -150)
+       .attr("text-anchor", "end")
+       .style("fill", "black")
+       .text("Percentage of Variance Explained (%)");
+
+     svg.selectAll(".dot")
+      .data(value)
+    .enter().append("circle") // Uses the enter().append() method
+      .attr("class", function(d, i) { 
+           if(i!=index-1) 
+              return "dot"; 
+           else 
+              return "intrinsic";
+              }) // Assign a class for styling
+      .attr("cx", function(d) { return xaxis(d.PC_Number) })
+      .attr("cy", function(d, i) { return yaxis(cum_value[i]) })
+      .attr("r", 5)
+      ;
+
+
+    svg.append("text")
+      .attr("x", xaxis(index-2))
+      .attr("y", yaxis(cum_value[index]))
+      .style("text-decoration", "underline")
+      .attr("stroke", "purple")
+      .text("Intrinsic Dimension=  "+ index)
+      // Add Plot Title
+      svg.append("text")
+         .attr("x", 450)
+         .attr("y", height-450)
+         .attr("text-anchor", "middle")  
+         .style("font-size", "20px") 
+         .style("text-decoration", "underline") 
+         .attr("stroke", "black")
+         .text(title_name);
+
+      // Add top 3 PCA Atrribute details
+      svg.append("text")
+         .attr("x", 100)
+         .attr("y", height+ 80)
+         .style("text-decoration", "underline") 
+         .text("Top 3 attributes with highest PCA Loadings:");
+
+      svg.append("text")
+         .attr("x", 100)
+         .attr("y", height+100)
+         .text(attr_value[0].Attribute_Name + ": " + attr_value[0].PCA_Loading);
+
+      svg.append("text")
+         .attr("x", 100)
+         .attr("y", height+120)
+         .text(attr_value[1].Attribute_Name + ": " + attr_value[1].PCA_Loading);
+
+      svg.append("text")
+         .attr("x", 100)
+         .attr("y", height+140)
+         .text(attr_value[2].Attribute_Name + ": " + attr_value[2].PCA_Loading);
+
+}
+
+
+function get_2D_scatterplot_pca(value, mode)
+{
+  // set the dimensions and margins of the graph
+  var margin = {top: 50, right: 20, bottom: 500, left: 70},
+    width = 1000 - margin.left - margin.right,
+    height = 1000 - margin.top - margin.bottom;
+
+  var colour;
+  if(mode == 0){
+    colour = "#005451";
+    title_name = "PCA Scatter Plot for Original Data"
+  }
+  else if (mode == 1){
+    colour = '#ea526f';
+    title_name = "PCA Scatter Plot for Random Data"
+  }
+  else{
+    colour = '#3a5fcd';
+    title_name = "PCA Scatter Plot for Stratified Data"
+  }
+  
+  
+  var rangexval  = d3.extent(value, function(d){return d.PC1});
+  var rangeyval  = d3.extent(value, function(d){return d.PC2});
+  var xaxis = d3.scaleLinear().range([0, width]).domain([rangexval[0]- 0.5, rangexval[1]+0.5]);
+  var yaxis = d3.scaleLinear().range([height, 0]).domain([rangeyval[0]- 0.5, rangeyval[1]+0.5]);
+  var svg = d3.select('svg')
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+        // Add the X Axis
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(xaxis).ticks(20))
+        .append("text")
+       .attr("y", 40)
+       .attr("dx", width -500)
+       .attr("text-anchor", "end")
+       .style("fill", "black")
+       .text("PC1")
+       .enter();
+
+    // Add the Y Axis
+    svg.append("g")
+        .call(d3.axisLeft(yaxis).ticks(20))
+        .append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("y", 20)
+       .attr("dy", "-5.1em")
+       .attr("x", -200)
+       .attr("text-anchor", "end")
+       .style("fill", "black")
+       .text("PC2");
+
+     svg.selectAll(".dot")
+      .data(value)
+    .enter().append("circle")
+      .attr("cx", function(d) { return xaxis(d.PC1) })
+      .attr("cy", function(d, i) { return yaxis(d.PC2) })
+      .style("stroke", "steelblue")
+      .style("stroke-width", "1px")
+      .style("fill", colour)
+      .attr("r", 5);
+
+      // Add Plot Title
+      svg.append("text")
+         .attr("x", 450)
+         .attr("y", height-450)
+         .attr("text-anchor", "middle")  
+         .style("font-size", "20px") 
+         .style("text-decoration", "underline") 
+         .attr("stroke", "black")
+         .text(title_name);
+
+}
+
+function get_2D_scatterplot_mds(value, mode)
+{
+  // set the dimensions and margins of the graph
+  var margin = {top: 50, right: 20, bottom: 500, left: 70},
+    width = 1000 - margin.left - margin.right,
+    height = 1000 - margin.top - margin.bottom;
+
+  if(mode == 0){
+    colour = "#005451";
+    title_name = "MDS Scatter Plot for Original Data (Euclidean)"
+  }
+  else if (mode == 1){
+    colour = '#005451';
+    title_name = "MDS Scatter Plot for Original Data (Correlation)"
+  }
+  else if (mode == 10){
+    colour = '#ea526f';
+    title_name = "MDS Scatter Plot for Random Data (Euclidean)"
+  }
+  else if (mode == 11){
+    colour = '#ea526f';
+    title_name = "MDS Scatter Plot for Random Data (Correlation)"
+  }
+  else if (mode == 20){
+    colour = '#3a5fcd';
+    title_name = "MDS Scatter Plot for Stratified Data (Euclidean)"
+  }
+  else{
+    colour = '#3a5fcd';
+    title_name = "MDS Scatter Plot for Stratified Data (Correlation)"
+  }
+  
+  var rangexval  = d3.extent(value, function(d){return d.MDS1});
+  var rangeyval  = d3.extent(value, function(d){return d.MDS2});
+  var xaxis = d3.scaleLinear().range([0, width]).domain([rangexval[0]- 0.5, rangexval[1]+0.5]);
+  var yaxis = d3.scaleLinear().range([height, 0]).domain([rangeyval[0]- 0.5, rangeyval[1]+0.5]);
+  var svg = d3.select('svg')
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+
+        // Add the X Axis
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(xaxis).ticks(20))
+        .append("text")
+       .attr("y", 40)
+       .attr("dx", width -500)
+       .attr("text-anchor", "end")
+       .style("fill", "black")
+       .text("MDS1")
+       .enter();
+
+    // Add the Y Axis
+    svg.append("g")
+        .call(d3.axisLeft(yaxis).ticks(20))
+        .append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("y", 20)
+       .attr("dy", "-5.1em")
+       .attr("x", -200)
+       .attr("text-anchor", "end")
+       .style("fill", "black")
+       .text("MDS2");
+
+     svg.selectAll(".dot")
+      .data(value)
+    .enter().append("circle") 
+      .attr("cx", function(d) { return xaxis(d.MDS1) })
+      .attr("cy", function(d, i) { return yaxis(d.MDS2) })
+      .style("stroke", "steelblue")
+      .style("stroke-width", "1px")
+      .style("fill", colour)
+      .attr("r", 5);
+      
+
+      // Add Plot Title
+      svg.append("text")
+         .attr("x", 450)
+         .attr("y", height-450)
+         .attr("text-anchor", "middle")  
+         .style("font-size", "20px") 
+         .style("text-decoration", "underline") 
+         .attr("stroke", "black")
+         .text(title_name);
+
+}
+
+
+</script>
+   </body>
+</html>
